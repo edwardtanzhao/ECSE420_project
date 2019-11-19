@@ -13,6 +13,7 @@ void swap(int* a, int* b) {
 }
 
 //quick sort
+// MODIFICATION: Parallize this part where each thread will access a different element and compare to the pivot rather than do it one at a time
 int partition(int arr[], int low, int high)
 {
 	int pivot = arr[high]; // pivot 
@@ -20,6 +21,7 @@ int partition(int arr[], int low, int high)
 
 	for (int j = low; j <= high - 1; j++)
 	{
+		//MODIFICATION: Make each thread go to a specific element and compare rather than one by one
 		// If current element is smaller than the pivot 
 		if (arr[j] < pivot)
 		{
@@ -46,7 +48,9 @@ void quickSort(int arr[], int low, int high)
 	}
 }
 
-void merge(int arr[], int l, int m, int r)
+//merge sort
+//MODIFICATION: Paralleize the merging operation and maybe parallize the splitting operation too
+void merge(int arr[], const int l, const int m, const int r)
 {
 	int i, j, k;
 	const int n1 = m - l + 1;
