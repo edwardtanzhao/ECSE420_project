@@ -4,6 +4,18 @@
 #include<cuda_runtime.h>
 #include<device_launch_parameters.h>
 
+__global__ void Quick_sort(int arr[], int pivots) {
+	//tell the program how many pivots there are now, program will determine where to plce the pivots and do the partitions 
+
+
+}
+
+__global__ void Merge_sort(int arr[], int splits) {
+	//similar as above, but tell th program how many splits have occured to know where to compare and merge
+
+
+}
+
 //quick sort
 //swap elements
 void swap(int* a, int* b) {
