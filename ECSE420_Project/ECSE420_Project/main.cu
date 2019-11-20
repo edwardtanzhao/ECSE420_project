@@ -1,163 +1,148 @@
-#include<stdio.h>
-#include<stdlib.h>
-// CUDA runtime
-#include<cuda_runtime.h>
-#include<device_launch_parameters.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+int DEBUG = 1;
+char* data;
 
-__global__ void Quick_sort(int arr[], int pivots) {
-	//tell the program how many pivots there are now, program will determine where to plce the pivots and do the partitions 
+int* get_list(int len) {
 
+	int* suffix_list = (int*)malloc(len * sizeof(int));
+	int i;
 
+	for (i = 0; i < len; i++) {
+		suffix_list[i] = i;
+	}
+	return suffix_list;
 }
 
-__global__ void Merge_sort(int arr[], int splits) {
-	//similar as above, but tell th program how many splits have occured to know where to compare and merge
+void quicksort(int* x, int first, int last) {
+	int pivot, j, i;
+	float temp;
 
+	if (first < last) {
+		pivot = first;
+		i = first;
+		j = last;
 
-}
-
-//quick sort
-//swap elements
-void swap(int* a, int* b) {
-	int t = *a;
-	*a = *b;
-	*b = t;
-}
-
-//quick sort
-// MODIFICATION: Parallize this part where each thread will access a different element and compare to the pivot rather than do it one at a time
-int partition(int arr[], int low, int high)
-{
-	int pivot = arr[high]; // pivot 
-	int i = (low - 1);  // Index of smaller element 
-
-	for (int j = low; j <= high - 1; j++)
-	{
-		//MODIFICATION: Make each thread go to a specific element and compare rather than one by one
-		// If current element is smaller than the pivot 
-		if (arr[j] < pivot)
-		{
-			i++;    // increment index of smaller element 
-			swap(&arr[i], &arr[j]);
+		while (i < j) {
+			while (x[i] <= x[pivot] && i < last)
+				i++;
+			while (x[j] > x[pivot])
+				j--;
+			if (i < j) {
+				temp = x[i];
+				x[i] = x[j];
+				x[j] = temp;
+			}
 		}
-	}
-	swap(&arr[i + 1], &arr[high]);
-	return (i + 1);
-}
-//quick sort
-void quickSort(int arr[], int low, int high)
-{
-	if (low < high)
-	{
-		/* pi is partitioning index, arr[p] is now
-		   at right place */
-		int pi = partition(arr, low, high);
 
-		// Separately sort elements before 
-		// partition and after partition 
-		quickSort(arr, low, pi - 1);
-		quickSort(arr, pi + 1, high);
+		temp = x[pivot];
+		x[pivot] = x[j];
+		x[j] = temp;
+		quicksort(x, first, j - 1);
+		quicksort(x, j + 1, last);
+
 	}
 }
 
-//merge sort
-//MODIFICATION: Paralleize the merging operation and maybe parallize the splitting operation too
-void merge(int arr[], const int l, const int m, const int r)
-{
-	int i, j, k;
-	const int n1 = m - l + 1;
-	const int n2 = r - m;
-
-	/* create temp arrays */
-	int L[n1], R[n2];
-
-	/* Copy data to temp arrays L[] and R[] */
-	for (i = 0; i < n1; i++)
-		L[i] = arr[l + i];
-	for (j = 0; j < n2; j++)
-		R[j] = arr[m + 1 + j];
-
-	/* Merge the temp arrays back into arr[l..r]*/
-	i = 0; // Initial index of first subarray 
-	j = 0; // Initial index of second subarray 
-	k = l; // Initial index of merged subarray 
-	while (i < n1 && j < n2)
-	{
-		if (L[i] <= R[j])
-		{
-			arr[k] = L[i];
-			i++;
-		}
-		else
-		{
-			arr[k] = R[j];
-			j++;
-		}
-		k++;
+void print_suffix_list(int* list, int len) {
+	int i = 0;
+	for (i = 0; i < len; i++) {
+		printf("%d", list[i]);
+		if (i != (len - 1)) printf(" ");
 	}
-
-	/* Copy the remaining elements of L[], if there
-	   are any */
-	while (i < n1)
-	{
-		arr[k] = L[i];
-		i++;
-		k++;
-	}
-
-	/* Copy the remaining elements of R[], if there
-	   are any */
-	while (j < n2)
-	{
-		arr[k] = R[j];
-		j++;
-		k++;
-	}
-}
-
-/* l is for left index and r is right index of the
-   sub-array of arr to be sorted */
-void mergeSort(int arr[], int l, int r)
-{
-	if (l < r)
-	{
-		// Same as (l+r)/2, but avoids overflow for 
-		// large l and h 
-		int m = l + (r - l) / 2;
-
-		// Sort first and second halves 
-		mergeSort(arr, l, m);
-		mergeSort(arr, m + 1, r);
-
-		merge(arr, l, m, r);
-	}
-}
-
-void printArray(int A[], int size)
-{
-	for (int i = 0; i < size; i++)
-		printf("%d ", A[i]);
 	printf("\n");
 }
 
+//merge sort
+void merge_sort(int i, int j, int a[], int aux[]) {
+	if (j <= i) {
+		return;     // the subsection is empty or a single element
+	}
+	int mid = (i + j) / 2;
 
-int main(int args, char* argv[]) {
-	//quick sort
-	int arr[] = { 10, 7, 8, 9, 1, 5 };
-	int n = sizeof(arr) / sizeof(arr[0]);
-	quickSort(arr, 0, n - 1);
-	printf("Sorted array: n");
-	printArray(arr, n);
+	// left sub-array is a[i .. mid]
+	// right sub-array is a[mid + 1 .. j]
 
-	//merge sort
-	int arr[] = { 12, 11, 13, 5, 6, 7 };
-	int arr_size = sizeof(arr) / sizeof(arr[0]);
+	merge_sort(i, mid, a, aux);     // sort the left sub-array recursively
+	merge_sort(mid + 1, j, a, aux);     // sort the right sub-array recursively
 
-	printf("Given array is \n");
-	printArray(arr, arr_size);
+	int pointer_left = i;       // pointer_left points to the beginning of the left sub-array
+	int pointer_right = mid + 1;        // pointer_right points to the beginning of the right sub-array
+	int k;      // k is the loop counter
 
-	mergeSort(arr, 0, arr_size - 1);
+	// we loop from i to j to fill each element of the final merged array
+	for (k = i; k <= j; k++) {
+		if (pointer_left == mid + 1) {      // left pointer has reached the limit
+			aux[k] = a[pointer_right];
+			pointer_right++;
+		}
+		else if (pointer_right == j + 1) {        // right pointer has reached the limit
+			aux[k] = a[pointer_left];
+			pointer_left++;
+		}
+		else if (a[pointer_left] < a[pointer_right]) {        // pointer left points to smaller element
+			aux[k] = a[pointer_left];
+			pointer_left++;
+		}
+		else {        // pointer right points to smaller element
+			aux[k] = a[pointer_right];
+			pointer_right++;
+		}
+	}
 
-	printf("\nSorted array is \n");
-	printArray(arr, arr_size);
+	for (k = i; k <= j; k++) {      // copy the elements from aux[] to a[]
+		a[k] = aux[k];
+	}
 }
+
+int main(int argc, char* argv[]) {
+	//quick sort sequential
+	/*clock_t start, end;
+	double runTime;
+	int size = 10;
+
+	start = clock();
+	int* data = (int*)malloc((size + 1) * sizeof(int));
+	for (int i = 0; i < size; i++) {
+		data[i] = i;
+	}
+
+	quicksort(data, 0, size-1);
+	print_suffix_list(data, size);
+
+	end = clock();
+	free(data);
+
+	runTime = (end - start) / (double)CLOCKS_PER_SEC;
+	printf("Quicksort sequential size: %d, and runtime: %f\n", size, runTime);*/
+	
+
+	clock_t start_m, end_m;
+	double runTime_m;
+	int size_m = 50;
+	int a[100], aux[100], n, i, d, swap;
+
+	for (int i = 0; i < size_m; i++) {
+		a[i] = rand() % 50;
+	}
+
+	start_m = clock();
+
+	merge_sort(0, size_m - 1, a, aux);
+
+	end_m = clock();
+
+	runTime_m = (end_m - start_m) / (double)CLOCKS_PER_SEC;
+
+	printf("Printing the sorted array:\n");
+	for (i = 0; i < size_m; i++)
+		printf(" %d, ", a[i]);
+
+	printf("\n");
+
+	printf("Mergesort sequential size: %d, and runtime: %f\n", size_m, runTime_m);
+}
+
+
