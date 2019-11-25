@@ -1,4 +1,4 @@
-
+import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import time, random, sys
 
@@ -12,57 +12,85 @@ def main():
     -time a parallel mergesort on the list.
     -time Python's built-in sorted on the list.
     """
-    N = 500000
+    N = 5000000
     if len(sys.argv) > 1:  #the user input a list size.
         N = int(sys.argv[1])
 
     #We want to sort the same list, so make a backup.
     lystbck = [random.random() for x in range(N)]
-
-    #Sequential mergesort a copy of the list.
     lyst = list(lystbck)
-    start = time.time()             #start time
-    lyst = mergesort(lyst)
-    elapsed = time.time() - start   #stop time
 
-    if not isSorted(lyst):
-        print('Sequential mergesort did not sort. oops.')
+    # #Sequential mergesort a copy of the list.
+    # lyst = list(lystbck)
+    # start = time.time()             #start time
+    # lyst = mergesort(lyst)
+    # elapsed = time.time() - start   #stop time
+    #
+    # if not isSorted(lyst):
+    #     print('Sequential mergesort did not sort. oops.')
     
-    print('Sequential mergesort: %f sec' % (elapsed))
+    # print('Sequential mergesort: %f sec' % (elapsed))
 
 
-    #So that cpu usage shows a lull.
-    time.sleep(3)
+    graphMergeSort(lyst)
 
 
-    #Now, parallel mergesort. 
-    lyst = list(lystbck)
-    start = time.time()
-    n = 3 #2**(n+1) - 1 processes will be instantiated.
+    # #So that cpu usage shows a lull.
+    # time.sleep(3)
+    #
+    # # 2**(n+1) - 1 processes will be instantiated.
+    # #Now, parallel mergesort.
+    # lyst = list(lystbck)
+    # start = time.time()
+    # n = 9
+    #
+    # #Instantiate a Process and send it the entire list,
+    # #along with a Pipe so that we can receive its response.
+    # lyst = mergeSortParallel(lyst, n)
+    #
+    # elapsed = time.time() - start
+    #
+    # if not isSorted(lyst):
+    #     print('mergeSortParallel did not sort. oops.')
+    #
+    # print('Parallel mergesort: %f sec' % (elapsed))
+    #
+    #
+    # time.sleep(3)
+    #
+    # #Built-in test.
+    # #The underlying c code is obviously the fastest, but then
+    # #using a calculator is usually faster too.  That isn't the
+    # #point here obviously.
+    # lyst = list(lystbck)
+    # start = time.time()
+    # lyst = sorted(lyst)
+    # elapsed = time.time() - start
+    # print('Built-in sorted: %f sec' % (elapsed))
 
-    #Instantiate a Process and send it the entire list,
-    #along with a Pipe so that we can receive its response.
-    lyst = mergeSortParallel(lyst, n)
+def graphMergeSort(list):
+    processNum = []
+    runTimeList = []
+    for n in range(0, 9):
+        print("Iteration: " + str(n) + "\n")
+        start = time.time()
+        list = mergeSortParallel(list, n)
+        elapsed = time.time() - start
+        runTimeList.append(elapsed)
+        processNum.append((2**(n+1) - 1))
 
-    elapsed = time.time() - start
+    # Graphing speedup
+    plt.figure(figsize=(10, 10))
+    plt.scatter(processNum, runTimeList)
+    plt.plot(processNum, runTimeList)
+    plt.xlabel("Number of parallel processes")
+    plt.xticks([0, 20, 40, 60, 80, 100, 120, 140, 180, 220, 260, 300, 340, 380, 420, 460, 500, 540])
+    plt.ylabel("Run time")
+    plt.title("Parallel Merge Sort Speedup")
+    plt.savefig('Merge_Sort_Speedup.png')
+    plt.show()
 
-    if not isSorted(lyst):
-        print('mergeSortParallel did not sort. oops.')
 
-    print('Parallel mergesort: %f sec' % (elapsed))
-
-
-    time.sleep(3)
-    
-    #Built-in test.
-    #The underlying c code is obviously the fastest, but then
-    #using a calculator is usually faster too.  That isn't the
-    #point here obviously.
-    lyst = list(lystbck)
-    start = time.time()
-    lyst = sorted(lyst)
-    elapsed = time.time() - start
-    print('Built-in sorted: %f sec' % (elapsed))
 
 
 def merge(left, right):
