@@ -1,72 +1,7 @@
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
-import time, random, sys
+import time, random
 
-#Dependencies defined below main()
-
-def main():
-    """
-    This is the main method, where we:
-    -generate a random list.
-    -time a sequential mergesort on the list.
-    -time a parallel mergesort on the list.
-    -time Python's built-in sorted on the list.
-    """
-    N = 5000000
-    if len(sys.argv) > 1:  #the user input a list size.
-        N = int(sys.argv[1])
-
-    #We want to sort the same list, so make a backup.
-    lystbck = [random.random() for x in range(N)]
-    lyst = list(lystbck)
-
-    # #Sequential mergesort a copy of the list.
-    # lyst = list(lystbck)
-    # start = time.time()             #start time
-    # lyst = mergesort(lyst)
-    # elapsed = time.time() - start   #stop time
-    #
-    # if not isSorted(lyst):
-    #     print('Sequential mergesort did not sort. oops.')
-    
-    # print('Sequential mergesort: %f sec' % (elapsed))
-
-
-    graphMergeSort(lyst)
-
-
-    # #So that cpu usage shows a lull.
-    # time.sleep(3)
-    #
-    # # 2**(n+1) - 1 processes will be instantiated.
-    # #Now, parallel mergesort.
-    # lyst = list(lystbck)
-    # start = time.time()
-    # n = 9
-    #
-    # #Instantiate a Process and send it the entire list,
-    # #along with a Pipe so that we can receive its response.
-    # lyst = mergeSortParallel(lyst, n)
-    #
-    # elapsed = time.time() - start
-    #
-    # if not isSorted(lyst):
-    #     print('mergeSortParallel did not sort. oops.')
-    #
-    # print('Parallel mergesort: %f sec' % (elapsed))
-    #
-    #
-    # time.sleep(3)
-    #
-    # #Built-in test.
-    # #The underlying c code is obviously the fastest, but then
-    # #using a calculator is usually faster too.  That isn't the
-    # #point here obviously.
-    # lyst = list(lystbck)
-    # start = time.time()
-    # lyst = sorted(lyst)
-    # elapsed = time.time() - start
-    # print('Built-in sorted: %f sec' % (elapsed))
 
 def graphMergeSort(list):
     processNum = []
@@ -74,10 +9,10 @@ def graphMergeSort(list):
     for n in range(0, 9):
         print("Iteration: " + str(n) + "\n")
         start = time.time()
-        list = mergeSortParallel(list, n)
+        list = parallel_mergesort(list, n)
         elapsed = time.time() - start
         runTimeList.append(elapsed)
-        processNum.append((2**(n+1) - 1))
+        processNum.append((2 ** (n + 1) - 1))
 
     # Graphing speedup
     plt.figure(figsize=(10, 10))
@@ -91,100 +26,87 @@ def graphMergeSort(list):
     plt.show()
 
 
-
-
 def merge(left, right):
-    """returns a merged and sorted version of the two already-sorted lists."""
-    ret = []
-    li = ri = 0
-    while li < len(left) and ri < len(right):
-        if left[li] <= right[ri]:
-            ret.append(left[li])
-            li += 1
+    merged = []
+    low = high = 0
+    while low < len(left) and high < len(right):
+        if left[low] <= right[high]:
+            merged.append(left[low])
+            low += 1
         else:
-            ret.append(right[ri])
-            ri += 1
-    if li == len(left):
-        ret.extend(right[ri:])
+            merged.append(right[high])
+            high += 1
+    if low == len(left):
+        merged.extend(right[high:])
     else:
-        ret.extend(left[li:])
-    return ret
-
-def mergesort(lyst):
-    """
-    The seemingly magical mergesort. Returns a sorted copy of lyst.
-    Note this does not change the argument lyst.
-    """
-    if len(lyst) <= 1:
-        return lyst
-    ind = len(lyst)//2
-    return merge(mergesort(lyst[:ind]), mergesort(lyst[ind:]))
-
-def mergeWrap(AandB):
-    a,b = AandB
-    return merge(a,b)
-
-def mergeSortParallel(lyst, n):
-    """
-    Attempt to get parallel mergesort faster in Windows.  There is
-    something wrong with having one Process instantiate another.
-    Looking at speedup.py, we get speedup by instantiating all the
-    processes at the same level. 
-    """
-    numproc = 2**n
-    #Evenly divide the lyst indices.
-    endpoints = [int(x) for x in linspace(0, len(lyst), numproc+1)]
-    #partition the lyst.
-    args = [lyst[endpoints[i]:endpoints[i+1]] for i in range(numproc)]
-
-	#instantiate a Pool of workers
-    pool = Pool(processes = numproc)
-    sortedsublists = pool.map(mergesort, args)
-	#i.e., perform mergesort on the first 1/numproc of the lyst, 
-	#the second 1/numproc of the lyst, etc.
-
-    #Now we have a bunch of sorted sublists.  while there is more than
-    #one, combine them with merge.
-    while len(sortedsublists) > 1:
-        #get sorted sublist pairs to send to merge
-        args = [(sortedsublists[i], sortedsublists[i+1]) \
-				for i in range(0, len(sortedsublists), 2)]
-        sortedsublists = pool.map(mergeWrap, args)
-
-	#Since we start with numproc a power of two, there will always be an 
-	#even number of sorted sublists to pair up, until there is only one.
-
-    return sortedsublists[0]
-    
-
-    
-def linspace(a,b,nsteps):
-    """
-    returns list of simple linear steps from a to b in nsteps.
-    """
-    ssize = float(b-a)/(nsteps-1)
-    return [a + i*ssize for i in range(nsteps)]
+        merged.extend(left[low:])
+    return merged
 
 
-def isSorted(lyst):
-    """
-    Return whether the argument lyst is in non-decreasing order.
-    """
-    #Cute list comprehension way that doesn't short-circuit.
-    #return len([x for x in
-    #            [a - b for a,b in zip(lyst[1:], lyst[0:-1])]
-    #            if x < 0]) == 0
-    for i in range(1, len(lyst)):
-        if lyst[i] < lyst[i-1]:
+def mergesort(arr):
+    if len(arr) <= 1:
+        return arr
+    index = len(arr) // 2
+    return merge(mergesort(arr[:index]), mergesort(arr[index:]))
+
+
+def wrapper(pair):
+    el1, el2 = pair
+    return merge(el1, el2)
+
+
+def parallel_mergesort(arr, n):
+    threads = 2 ** n
+    ends = [int(x) for x in spacing(0, len(arr), threads + 1)]
+    result = [arr[ends[i]:ends[i + 1]] for i in range(threads)]
+
+    p = Pool(processes=threads)
+    curr_sorted_list = p.map(mergesort, result)
+
+    while len(curr_sorted_list) > 1:
+        result = [(curr_sorted_list[i], curr_sorted_list[i + 1]) for i in range(0, len(curr_sorted_list), 2)]
+        curr_sorted_list = p.map(wrapper, result)
+
+    return curr_sorted_list[0]
+
+
+def spacing(el1, el2, steps):
+    length = float(el2 - el1) / (steps - 1)
+    return [el1 + i * length for i in range(steps)]
+
+
+def isSorted(arr):
+    for i in range(1, len(arr)):
+        if arr[i] < arr[i - 1]:
             return False
     return True
 
-#Execute the main method now that all the dependencies
-#have been defined.
-#The if __name is so that pydoc works and we can still run
-#on the command line.
+
 if __name__ == '__main__':
-    main()
+    N = 500000
+
+    random_list = [random.random() for x in range(N)]
+
+    random_list_copy = list(random_list)
+    start = time.time()
+    random_list_copy = mergesort(random_list_copy)
+    diff = time.time() - start
     
-    
-    
+    if not isSorted(random_list_copy):
+        print('LIST STILL NOT SORTED!!')
+    print('Mergesort in Sequential : %f sec' % (diff))
+
+    # graphMergeSort(random_list_copy)
+
+    random_list_copy = list(random_list)
+    start = time.time()
+    # number of threads = 2^(n+1) - 1
+    n = 2
+
+    random_list_copy = parallel_mergesort(random_list_copy, n)
+
+    diff = time.time() - start
+
+    if not isSorted(random_list_copy):
+        print('LIST STILL NOT SORTED!!')
+    print('Mergesort in Parallel: %f sec' % (diff))
