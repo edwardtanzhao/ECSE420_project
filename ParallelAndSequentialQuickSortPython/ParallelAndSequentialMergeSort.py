@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import time, random
 
-
+# Graph merge sort
 def graphMergeSort(list):
     processNum = []
     runTimeList = []
@@ -25,7 +25,7 @@ def graphMergeSort(list):
     plt.savefig('Merge_Sort_Speedup.png')
     plt.show()
 
-
+# Merging sublists
 def merge(left, right):
     merged = []
     low = high = 0
@@ -42,14 +42,14 @@ def merge(left, right):
         merged.extend(left[low:])
     return merged
 
-
+# Merge sort
 def mergesort(arr):
     if len(arr) <= 1:
         return arr
     index = len(arr) // 2
     return merge(mergesort(arr[:index]), mergesort(arr[index:]))
 
-
+# returning tuple of sorted lists as pair
 def wrapper(pair):
     el1, el2 = pair
     return merge(el1, el2)
