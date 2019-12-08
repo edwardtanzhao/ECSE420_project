@@ -83,7 +83,8 @@ def isSorted(arr):
 
 
 if __name__ == '__main__':
-    N = 500000
+
+    N = 5000000
 
     random_list = [random.random() for x in range(N)]
 
